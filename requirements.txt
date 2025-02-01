@@ -1,0 +1,6 @@
+# insta_scraping/app/requirements.txt
+fastapi
+uvicorn
+instaloader
+python-dotenv
+requests
