@@ -1,9 +1,10 @@
-# save_session.py
-import os
+# save_cookies.py
 import instaloader
 from dotenv import load_dotenv
+import os
+import shutil
 
-def save_session():
+def save_session_local():
     try:
         # Carrega variáveis do ambiente
         load_dotenv()
@@ -11,10 +12,6 @@ def save_session():
         # Obtém credenciais do .env
         username = os.getenv("INSTAGRAM_USERNAME")
         password = os.getenv("INSTAGRAM_PASSWORD")
-        
-        if not username or not password:
-            print("Erro: Configure INSTAGRAM_USERNAME e INSTAGRAM_PASSWORD no .env")
-            return False
         
         # Cria instância do Instaloader
         L = instaloader.Instaloader()
@@ -25,18 +22,14 @@ def save_session():
         print("Login bem sucedido!")
         
         # Salva a sessão
-        L.save_session_to_file()
-        print(f"Sessão salva em {username}_session")
+        session_file = f"{username}_session"
+        L.save_session_to_file(session_file)
+        print(f"Sessão salva em {session_file}")
         
-        # Testa a sessão
-        print("\nTestando a sessão...")
-        test = instaloader.Instaloader()
-        test.load_session_from_file(username)
-        
-        # Tenta acessar um perfil
-        test_profile = "instagram"
-        profile = instaloader.Profile.from_username(test.context, test_profile)
-        print(f"Teste concluído! Conseguimos acessar o perfil @{test_profile}")
+        # Cria uma cópia de backup
+        backup_file = f"{session_file}.backup"
+        shutil.copy2(session_file, backup_file)
+        print(f"Backup criado em {backup_file}")
         
         return True
     
@@ -45,4 +38,4 @@ def save_session():
         return False
 
 if __name__ == "__main__":
-    save_session()
+    save_session_local()
