@@ -4,6 +4,7 @@ import instaloader
 import time
 import random
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Carrega variáveis do ambiente
 load_dotenv()
@@ -51,7 +52,8 @@ def test_instagram_session():
         if not username:
             raise ValueError("INSTAGRAM_USERNAME não configurado no .env")
             
-        session_file = f"{username}_session"
+        # Usar caminho completo do arquivo de sessão
+        session_file = os.path.abspath(f"{username}_session")
         
         if not os.path.exists(session_file):
             raise ValueError(f"Arquivo de sessão não encontrado: {session_file}")
@@ -69,9 +71,9 @@ def test_instagram_session():
             request_timeout=30
         )
         
-        # Carregar sessão
+        # Carregar sessão usando caminho completo
         log_info("Tentando carregar sessão...")
-        loader.load_session_from_file(username)
+        loader.load_session_from_file(username, session_file)
         log_info("Sessão carregada com sucesso!")
         
         # Função para testar um perfil
