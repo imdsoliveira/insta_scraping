@@ -1,7 +1,9 @@
+# test_session.py
 import os
 import instaloader
 import time
 import random
+import requests
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -13,23 +15,6 @@ MAX_RETRIES = 3
 BASE_DELAY = 5
 USE_DELAY = True
 
-# Headers personalizados
-CUSTOM_HEADERS = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-    'Cache-Control': 'max-age=0',
-    'Sec-Ch-Ua': '"Not A(Brand";v="8", "Chromium";v="132", "Google Chrome";v="132"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': '"Windows"',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'same-origin',
-    'Sec-Fetch-User': '?1',
-    'Upgrade-Insecure-Requests': '1',
-    'Viewport-Width': '1575'
-}
-
 def log_info(message):
     print(f"[INFO] {message}")
 
@@ -37,15 +22,18 @@ def log_error(message):
     print(f"[ERROR] {message}")
 
 def random_delay():
-    """Implementa um delay aleatório"""
+    """Implementa um delay aleatório mais natural"""
     if USE_DELAY:
-        delay = random.uniform(3, 7)
+        delay = random.uniform(3, 7) + random.random()
         time.sleep(delay)
 
 class CustomInstaloader(instaloader.Instaloader):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.context.headers.update(CUSTOM_HEADERS)
+        # Configurações adicionais para simular comportamento humano
+        self.context.sleep = True
+        self.context.max_connection_attempts = 3
+        self.context.request_timeout = 30
 
     def get_anonymous_session(self):
         random_delay()
@@ -53,15 +41,18 @@ class CustomInstaloader(instaloader.Instaloader):
 
 def retry_operation(operation, max_retries=MAX_RETRIES):
     """Tenta uma operação com retry e delay exponencial"""
+    last_error = None
     for attempt in range(max_retries):
         try:
             return operation()
         except Exception as e:
+            last_error = e
             if attempt == max_retries - 1:
                 raise
             delay = BASE_DELAY * (2 ** attempt) + random.uniform(2, 5)
             log_info(f"Tentativa {attempt + 1} falhou. Aguardando {delay:.1f}s...")
             time.sleep(delay)
+    raise last_error
 
 def test_instagram_session():
     """Testa a sessão do Instagram"""
@@ -77,17 +68,21 @@ def test_instagram_session():
         
         log_info(f"Encontrado arquivo de sessão: {session_file}")
         
+        # Criar instância customizada do Instaloader
         loader = CustomInstaloader(
+            sleep=True,
+            quiet=False,
             download_pictures=False,
             download_videos=False,
             download_video_thumbnails=False,
             download_geotags=False,
             download_comments=False,
             save_metadata=False,
-            request_timeout=30,
-            max_connection_attempts=3
+            compress_json=False,
+            post_metadata_txt_pattern=''
         )
         
+        # Carregar sessão
         log_info("Tentando carregar sessão...")
         loader.load_session_from_file(username, session_file)
         log_info("Sessão carregada com sucesso!")
@@ -103,8 +98,8 @@ def test_instagram_session():
             
             return retry_operation(_get_profile)
 
-        # Testar com perfis menos populares primeiro
-        test_profiles = ['nasa', 'natgeo', 'bbcnews']
+        # Lista de perfis para teste (menos populares primeiro)
+        test_profiles = ['natgeo', 'nasa', 'bbcnews']
         
         log_info("\nIniciando testes com perfis...")
         for test_username in test_profiles:
@@ -113,10 +108,12 @@ def test_instagram_session():
                 profile = test_profile(test_username)
                 log_info(f"Teste com @{test_username} bem sucedido!")
                 return True
+            except instaloader.exceptions.ConnectionException as e:
+                log_error(f"Erro de conexão ao testar @{test_username}: {str(e)}")
+                time.sleep(random.uniform(7, 15))
             except Exception as e:
                 log_error(f"Erro ao testar perfil @{test_username}: {str(e)}")
-                time.sleep(random.uniform(5, 10))  # Delay adicional entre perfis
-                continue
+                time.sleep(random.uniform(5, 10))
         
         raise Exception("Nenhum teste foi bem sucedido")
         
@@ -126,5 +123,10 @@ def test_instagram_session():
 
 if __name__ == "__main__":
     print("Iniciando teste de sessão do Instagram...")
-    success = test_instagram_session()
-    print(f"\nResultado final do teste: {'SUCESSO' if success else 'FALHA'}")
+    try:
+        success = test_instagram_session()
+        print(f"\nResultado final do teste: {'SUCESSO' if success else 'FALHA'}")
+    except KeyboardInterrupt:
+        print("\nTeste interrompido pelo usuário")
+    except Exception as e:
+        print(f"\nErro inesperado: {str(e)}")
