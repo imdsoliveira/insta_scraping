@@ -1,26 +1,28 @@
-[project]
+[tool.poetry]
 name = "insta_scraping"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "Douglas Oliveira",email = "63203428+imdsoliveira@users.noreply.github.com"}
-]
+authors = ["Douglas Oliveira <63203428+imdsoliveira@users.noreply.github.com>"]
 readme = "README.md"
-requires-python = ">=3.13,<4.0"
-dependencies = [
-    "taskipy (>=1.14.1,<2.0.0)",
-    "requests (>=2.32.3,<3.0.0)",
-    "python-dotenv (>=1.0.1,<2.0.0)",
-    "instaloader (>=4.14.1,<5.0.0)",
-    "uvicorn (>=0.34.0,<0.35.0)",
-    "fastapi (>=0.115.8,<0.116.0)"
-]
+requirements-python = ">=3.13,<4.0"
 
+[tool.poetry.dependencies]
+python = ">=3.13,<4.0"
+taskipy = ">=1.14.1,<2.0.0"
+requests = ">=2.32.3,<3.0.0"
+python-dotenv = ">=1.0.1,<2.0.0"
+instaloader = ">=4.14.1,<5.0.0"
+uvicorn = ">=0.34.0,<0.35.0"
+fastapi = ">=0.115.8,<0.116.0"
+
+[tool.poetry.scripts]
+run = "get_profile:main"  # Caso você queira criar um script executável no Poetry
+# ou outros scripts
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=1.0.0,<2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.taskipy.tasks]
 run = "python get_profile.py"
-update = "python.exe -m pip install --upgrade pip && poetry update"
+update = "python -m pip install --upgrade pip && poetry update"
