@@ -3,6 +3,8 @@ dra.manubarcelos
 dracintiacardoso
 dramichelineklein
 
+python save_cookies.py
+python test_session.py --username imdouglasoliveira
 python3 get_profile.py --username dramichelineklein
 
 # Preparação do Ambiente:
